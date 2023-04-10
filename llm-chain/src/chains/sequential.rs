@@ -1,3 +1,5 @@
+use std::io::Write;
+
 #[cfg(feature = "serialization")]
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +31,15 @@ impl<S: Step> Chain<S> {
         let mut output: Option<L::Output> = None;
         for step in self.steps.iter() {
             let formatted = step.format(&current_params);
-            let res = executor.execute(formatted).await;
+            let res = executor
+                .execute(
+                    formatted,
+                    Some(Box::new(|str| {
+                        print!("{}", str);
+                        std::io::stdout().flush().unwrap();
+                    })),
+                )
+                .await;
             current_params = L::apply_output_to_parameters(current_params, &res);
             output = Some(res);
         }

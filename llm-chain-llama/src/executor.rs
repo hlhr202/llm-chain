@@ -35,6 +35,7 @@ fn run_model(
     input_ctx: &LLamaContext,
     input: LlamaInvocation,
     context_params: &Option<LlamaContextParams>,
+    callback: Option<Box<dyn Fn(String) + Send>>,
 ) -> Output {
     let context_params_c = LlamaContextParams::or_default(context_params);
     // Tokenize the stop sequence and input prompt.
@@ -94,6 +95,12 @@ fn run_model(
         input_ctx
             .llama_eval(&embd[n_used..], 1, n_used as i32, &input)
             .unwrap();
+
+        let str = input_ctx.llama_token_to_str(embd[n_used]);
+
+        if let Some(ref callback_box) = callback {
+            callback_box.as_ref()(str.to_owned());
+        }
     }
     embedding_to_output(
         input_ctx,
@@ -103,8 +110,8 @@ fn run_model(
 
 impl Executor {
     // Run the LLAMA model with the provided input and generate output.
-    fn run_model(&self, input: LlamaInvocation) -> Output {
-        run_model(&self.context, input, &self.context_params)
+    fn run_model(&self, input: LlamaInvocation, callback: Option<Box<dyn Fn(String) + Send>>) -> Output {
+        run_model(&self.context, input, &self.context_params, callback)
     }
 }
 
@@ -117,8 +124,9 @@ impl ExecutorTrait for Executor {
     async fn execute(
         &self,
         input: <<Executor as ExecutorTrait>::Step as traits::Step>::Output,
+        callback: Option<Box<dyn Fn(String) + Send>>
     ) -> Self::Output {
-        self.run_model(input)
+        self.run_model(input, callback)
     }
 
     // Applies the output to the given parameters.

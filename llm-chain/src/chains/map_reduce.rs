@@ -30,7 +30,7 @@ impl<S: Step> Chain<S> {
             .iter()
             .map(|doc| base_parameters.combine(doc))
             .map(|doc| self.map.format(&doc))
-            .map(|formatted| executor.execute(formatted));
+            .map(|formatted| executor.execute(formatted, None));
         let mapped_documents = join_all(mapped_documents).await;
 
         let combined_output = mapped_documents
@@ -42,7 +42,7 @@ impl<S: Step> Chain<S> {
         let combined_parameters = L::apply_output_to_parameters(base_parameters, &combined_output);
 
         let formatted = self.reduce.format(&combined_parameters);
-        let output = executor.execute(formatted).await;
+        let output = executor.execute(formatted, None).await;
         Some(output)
     }
 }

@@ -33,6 +33,7 @@ impl traits::Executor for Executor {
     async fn execute(
         &self,
         input: <<Executor as traits::Executor>::Step as traits::Step>::Output,
+        _callback: Option<Box<dyn Fn(String) + Send>>,
     ) -> Self::Output {
         let client = self.client.clone();
         async move { client.chat().create(input).await.unwrap() }.await

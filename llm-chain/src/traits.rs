@@ -30,7 +30,7 @@ pub trait StepExt: Step {
 pub trait Executor {
     type Step: Step;
     type Output: Send;
-    async fn execute(&self, input: <<Self as Executor>::Step as Step>::Output) -> Self::Output;
+    async fn execute(&self, input: <<Self as Executor>::Step as Step>::Output, callback: Option<Box<dyn Fn(String) + Send>>) -> Self::Output;
     fn apply_output_to_parameters(parameters: Parameters, output: &Self::Output) -> Parameters;
     fn combine_outputs(output: &Self::Output, other: &Self::Output) -> Self::Output;
 }
